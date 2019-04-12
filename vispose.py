@@ -3,8 +3,7 @@ from PyQt5.QtCore import QObject, pyqtSlot, QTimer
 from mainwindow import Ui_MainWindow
 import sys, os
 from os import path as osp
-from threading import Thread
-import viewer2 as v
+import viewer as v
 import numpy as np
 import glfw # lean window system wrapper for OpenGL
 import argparse
@@ -14,7 +13,6 @@ import json
 
 class MainWindowUIClass( Ui_MainWindow ):
     def __init__(self, camera_cal, image_folder, pose_file, main_window):
-        glfw.init()             # initialize window system glfw
         super(MainWindowUIClass, self).__init__()
 
         # Parse pose annotation file
@@ -52,7 +50,6 @@ class MainWindowUIClass( Ui_MainWindow ):
         self.setImageIndex(0)
 
     def __del__(self):
-        glfw.terminate()        # destroy all glfw windows and GL contexts
         self.t.join()
         
     def setupUi( self, MW ):
@@ -354,11 +351,8 @@ class MainWindowUIClass( Ui_MainWindow ):
                 self.listWidget.setCurrentItem(item)
                 name = str(item.text())
                 pose = list(self.viewer.get_pose_vec()) # x,y,z,qw,qx,qy,qz
-                coords = self.viewer.bounding_box()
-                width = coords[1] - coords[0]
-                height = coords[3] - coords[2]
-                area = width*height
-                bbox = [coords[0], coords[2], width, height]
+                bbox = self.viewer.bounding_box()
+                area = bbox[2]*bbox[3]
                 ann['image_id'] = image['id']
                 ann['category_id'] = names.index(name) 
                 ann['iscrowd'] = 0

@@ -29,16 +29,12 @@ from transform import *
 
 # ------------  simple color fragment shader demonstrated in Practical 1 ------
 COLOR_VERT = """#version 330 core
+uniform mat4 modelviewprojection;
+uniform vec3 color;
 layout(location = 0) in vec3 position;
-layout(location = 1) in vec3 color;
-
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
 out vec3 fragColor;
-
 void main() {
-    gl_Position = projection * view * model * vec4(position, 1);
+    gl_Position = modelviewprojection * vec4(position, 1);
     fragColor = color;
 }"""
 
@@ -264,6 +260,47 @@ class Node(object):
         model = np.dot(model, self.transform) # what to insert here for hierarchical update?
         for child in self.children:
             child.draw(projection, view, model, **param)
+
+
+class BoundingBox:
+    def __init__(self, coords, width=0.01, color=[1,0,0]):
+      self.shader = Shader(COLOR_VERT, COLOR_FRAG)
+
+      self.color = np.array(color)
+
+      minx, maxx, miny, maxy = coords # normalized coordinates as [minx, maxx, miny, maxy]
+
+      vertices = np.array(((minx, maxy+width, 0), (minx-width, maxy+width, 0), (minx-width, maxy, 0),
+                           (minx-width, miny, 0), (minx-width, miny-width, 0), (minx, miny-width, 0),
+                           (maxx, miny-width, 0), (maxx+width, miny-width, 0), (maxx+width, miny, 0),
+                           (maxx+width, maxy, 0), (maxx+width, maxy+width, 0), (maxx, maxy+width, 0)), np.float32)
+      # vertices = np.clip(vertices, -1, 1)
+      faces = np.array(((0, 1, 4), (0, 4, 5),
+                        (8, 3, 4), (8, 4, 7),
+                        (10, 11, 6), (10, 6, 7),
+                        (10, 1, 2), (10, 2, 9)), np.uint32)
+      self.vertex_array = VertexArray([vertices], faces)
+
+      # background image as texture
+      self.wrap_mode = GL.GL_CLAMP_TO_EDGE
+      self.filter_mode = (GL.GL_NEAREST, GL.GL_NEAREST)
+
+    def draw(self):
+      """  Draw background image using a quad. """
+      GL.glUseProgram(self.shader.glid)
+
+      # projection geometry
+      loc = GL.glGetUniformLocation(self.shader.glid, 'modelviewprojection')
+      GL.glUniformMatrix4fv(loc, 1, True, np.eye(4))
+
+      loc = GL.glGetUniformLocation(self.shader.glid, 'color')
+      GL.glUniform3fv(loc, 1, self.color)
+
+      self.vertex_array.execute(GL.GL_TRIANGLES)
+
+      # leave clean state for easier debugging
+      GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+      GL.glUseProgram(0)
 
 
 class TexturedPlane:
@@ -521,6 +558,7 @@ class GLFWTrackball(Trackball):
         self.zoom(deltay, glfw.get_window_size(win)[1])
 
 
+# Note: camera intrinsic center should be at center pixel coordinate
 class Camera:
   def __init__(self, params, clipplanenear=0.001, clipplanefar=10.0, name='cam0'):
     self.name = name
@@ -544,16 +582,6 @@ class Camera:
     self.fovy = 2*np.arctan(0.5*self.height/fy)*180/np.pi
     self.aspect = (self.width*fy)/(self.height*fx)
     self.horizontalfov = self.fovy * np.pi / 180
-
-    #self.transformation = np.eye(4)
-    # Rt = np.array([[0.9285,   -0.3686,    0.0458,    0.0957],
-    #               [-0.1438,   -0.4703,   -0.8707,    0.0042],
-    #               [0.3424,    0.8018,   -0.4897,    0.6644]])
-    # M = np.eye(4)
-    # M[:3,:3] = Rt[:3,:3]
-    # M[:3,3] = Rt[:,3] 
-    # self.transformation = linalg.inv(M)
-    # self.transformation = numpy.dot(self.transformation, ROTATION_180_X)
 
   def __str__(self):
       return self.name
@@ -586,6 +614,7 @@ class Viewer:
     def __init__(self, camera, background, max_dim=1000.0):
 
         # version hints: create GL window with >= OpenGL 3.3 and core profile
+        glfw.init()             # initialize window system glfw
         glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 3)
         glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 3)
         glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, GL.GL_TRUE)
@@ -622,6 +651,7 @@ class Viewer:
 
         # initially empty list of object to draw
         self.drawables = []
+        self.bboxes = []
         self.active_drawable = 0
 
         # initialize trackball
@@ -638,6 +668,9 @@ class Viewer:
         self.camera = camera
         self.set_camera_projection()
 
+    def __del__(self):
+        glfw.terminate()        # destroy all glfw windows and GL contexts
+
     def set_camera_projection(self):
         znear = self.camera.clipplanenear
         zfar = self.camera.clipplanefar
@@ -653,6 +686,7 @@ class Viewer:
 
     def set_pose_matrix(self, Rt):
       self.trackball.set_pose_matrix(mat_to_gl(Rt))
+      self.drawables[self.active_drawable].model_matrix = self.trackball.model_matrix
 
     def get_pose_matrix(self):
       view = self.trackball.view_matrix
@@ -686,6 +720,9 @@ class Viewer:
                 else:
                   drawable.draw(self.texture_shader, projection, view, win=self.win)
 
+            for bbox in self.bboxes:
+              bbox.draw()
+
             # flush render commands, and swap draw buffers
             glfw.swap_buffers(self.win)
 
@@ -711,11 +748,28 @@ class Viewer:
             else:
               drawable.draw(self.texture_shader, projection, view, win=self.win)
 
+        for bbox in self.bboxes:
+          bbox.draw()
+
         # flush render commands, and swap draw buffers
         glfw.swap_buffers(self.win)
 
         # Poll for and process events
         glfw.poll_events()
+
+    def add_bbox(self, bbox):
+      minx = bbox[0]; maxx = bbox[0]+bbox[2]
+      miny = bbox[1]; maxy = bbox[1]+bbox[3]
+
+      nminx = 2*(minx-self.camera.width/2)/float(self.camera.width)
+      nmaxx = 2*(maxx-self.camera.width/2)/float(self.camera.width)
+      nmaxy = -2*(miny-self.camera.height/2)/float(self.camera.height)
+      nminy = -2*(maxy-self.camera.height/2)/float(self.camera.height)
+
+      self.bboxes.append(BoundingBox([nminx, nmaxx, nminy, nmaxy]))
+
+    def clear_bboxes(self):
+      self.bboxes = []
 
     def add(self, *drawables):
         """ add objects to draw in this window """
@@ -749,22 +803,45 @@ class Viewer:
           return drawable.alpha
       return 1.0
 
+    def in_frustum(self, M, pvec):
+        # visible_points = []
+        visible = False
+        gl4d = np.dot(M, pvec)
+        for i in range(gl4d.shape[1]):
+          Pclip = gl4d[:,i]
+          visible = visible or (abs(Pclip[0]) < Pclip[3] and
+                 abs(Pclip[1]) < Pclip[3] and
+                 0 < Pclip[2] and
+                 Pclip[2] < Pclip[3])
+        #   if visible:
+        #     visible_points.append(pvec[:,i])
+        # return np.array(visible_points).T
+        return visible
+
     def bounding_box(self):
       if self.drawables:
         drawable = self.drawables[self.active_drawable]
-        view = self.trackball.view_matrix
-        model = self.trackball.model_matrix
-        modelView = mat_from_gl(np.dot(view, model))
-        modelView = modelView[0:3,0:4]
-        P = np.dot(self.camera.K, modelView)
         vertices = drawable.mesh.vertices.T
         x3d = np.ones((4,vertices.shape[1]))
         x3d[0:3,:] = vertices
+        view = self.trackball.view_matrix
+        model = self.trackball.model_matrix
+        glModelViewProj = np.dot(self.projection_matrix, np.dot(view, model))
+        modelView = mat_from_gl(np.dot(view, model))
+        modelView = modelView[0:3,0:4]
+        P = np.dot(self.camera.K, modelView)
         x2d = np.dot(P,x3d)
         x2d /= x2d[2,:]
-        minX = max(0, min(x2d[0,:])); maxX = min(self.camera.width, max(x2d[0,:]))
-        minY = max(0, min(x2d[1,:])); maxY = min(self.camera.height, max(x2d[1,:]))
-        return [minX, maxX, minY, maxY]
+        minx = min(x2d[0,:]); maxx = max(x2d[0,:])
+        miny = min(x2d[1,:]); maxy = max(x2d[1,:])
+        if (maxx < 0 or minx > self.camera.width or maxy < 0 or miny > self.camera.height
+          or maxx - minx > 10000 or maxy-miny > 10000 or modelView[2,3] < 0):
+        # if not self.in_frustum(glModelViewProj, x3d):
+          maxx = minx = maxy = miny = 0
+        else:
+          minx = max(0, minx); maxx = min(self.camera.width, maxx)
+          miny = max(0, miny); maxy = min(self.camera.height, maxy)
+        return [minx, miny, maxx-minx, maxy-miny]
       else:
         return None
 
@@ -830,6 +907,4 @@ def main():
 
 
 if __name__ == '__main__':
-    glfw.init()                # initialize window system glfw
     main()                     # main function keeps variables locally scoped
-    glfw.terminate()           # destroy all glfw windows and GL contexts
