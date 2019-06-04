@@ -67,7 +67,6 @@ void main() {
     outColor.a = alpha;
 }"""
 
-
 # ------------ low level OpenGL object wrappers ----------------------------
 class Shader:
     """ Helper class to create and automatically destroy shader program """
@@ -279,6 +278,43 @@ class BoundingBox:
                         (8, 3, 4), (8, 4, 7),
                         (10, 11, 6), (10, 6, 7),
                         (10, 1, 2), (10, 2, 9)), np.uint32)
+      self.vertex_array = VertexArray([vertices], faces)
+
+      # background image as texture
+      self.wrap_mode = GL.GL_CLAMP_TO_EDGE
+      self.filter_mode = (GL.GL_NEAREST, GL.GL_NEAREST)
+
+    def draw(self):
+      """  Draw background image using a quad. """
+      GL.glUseProgram(self.shader.glid)
+
+      # projection geometry
+      loc = GL.glGetUniformLocation(self.shader.glid, 'modelviewprojection')
+      GL.glUniformMatrix4fv(loc, 1, True, np.eye(4))
+
+      loc = GL.glGetUniformLocation(self.shader.glid, 'color')
+      GL.glUniform3fv(loc, 1, self.color)
+
+      self.vertex_array.execute(GL.GL_TRIANGLES)
+
+      # leave clean state for easier debugging
+      GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+      GL.glUseProgram(0)
+
+
+class Marker:
+    def __init__(self, coords, color=[1,0,0]):
+      self.shader = Shader(COLOR_VERT, COLOR_FRAG)
+
+      self.color = np.array(color)
+
+      minx, maxx, miny, maxy = coords # normalized coordinates as [minx, maxx, miny, maxy]
+      vertices = np.array(((minx, maxy, 0),
+                           (minx, miny, 0),
+                           (maxx, miny, 0),
+                           (maxx, maxy, 0)), np.float32)
+      # vertices = np.clip(vertices, -1, 1)
+      faces = np.array(((0, 1, 2), (3, 0, 2)), np.uint32)
       self.vertex_array = VertexArray([vertices], faces)
 
       # background image as texture
@@ -668,6 +704,9 @@ class Viewer:
         self.camera = camera
         self.set_camera_projection()
 
+        # frame marker
+        self.markers = []
+
     def __del__(self):
         glfw.terminate()        # destroy all glfw windows and GL contexts
 
@@ -751,6 +790,9 @@ class Viewer:
         for bbox in self.bboxes:
           bbox.draw()
 
+        for marker in self.markers:
+          marker.draw()
+
         # flush render commands, and swap draw buffers
         glfw.swap_buffers(self.win)
 
@@ -767,6 +809,16 @@ class Viewer:
       nminy = -2*(maxy-self.camera.height/2)/float(self.camera.height)
 
       self.bboxes.append(BoundingBox([nminx, nmaxx, nminy, nmaxy]))
+
+    def add_marker(self, center=[0.5, 0.5], width=0.1, color=[1,0,0]):
+      minx = center[0] - width/2.0
+      miny = center[1] - width/2.0
+      maxx = center[0] + width/2.0
+      maxy = center[1] + width/2.0
+      self.markers.append(Marker([minx, maxx, miny, maxy], color=color))
+
+    def clear_markers(self):
+      self.markers = []
 
     def clear_bboxes(self):
       self.bboxes = []

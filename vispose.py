@@ -291,9 +291,12 @@ class MainWindowUIClass( Ui_MainWindow ):
                 i += 1
                 basenametmp = basename + '-' + str(i)
             basename = basenametmp
-            self.viewer.add(*[mesh for mesh in v.load_textured(fileName, basename)])
-            self.listWidget.addItems([basename])
-            self.listWidget.setCurrentRow(self.listWidget.count()-1)
+            try:
+                self.viewer.add(*[mesh for mesh in v.load_textured(fileName, basename)])
+                self.listWidget.addItems([basename])
+                self.listWidget.setCurrentRow(self.listWidget.count()-1)
+            except Exception as e:
+                print(e)
             # item = self.listWidget.currentItem()
             # item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
 

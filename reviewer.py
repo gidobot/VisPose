@@ -4,6 +4,7 @@ import glfw # lean window system wrapper for OpenGL
 import argparse
 import transforms3d as tf3d
 import json
+import sys
 from os import path as osp
 from time import time
 
@@ -28,14 +29,18 @@ def keyCallback(win, key, scancode, action, mods):
     global INDEX
     global MAX_INDEX
     global UPDATE_FLAG
+    global SAVE_FLAG
     global PLAY
     global BBOX
+    global BLACKLIST
     if action == glfw.PRESS or action == glfw.REPEAT:
         if key == glfw.KEY_SPACE:
             PLAY = ~PLAY
         elif key == glfw.KEY_B:
             BBOX = ~BBOX
             UPDATE_FLAG = 1
+        elif key == glfw.KEY_S:
+            SAVE_FLAG = 1
         elif ~PLAY:
             if key == glfw.KEY_LEFT:
                 if INDEX != 0:
@@ -45,6 +50,13 @@ def keyCallback(win, key, scancode, action, mods):
                 if INDEX != MAX_INDEX:
                     INDEX += 1
                     UPDATE_FLAG = 1
+            elif key == glfw.KEY_M:
+                if INDEX in BLACKLIST:
+                    BLACKLIST.remove(INDEX)
+                else:
+                    BLACKLIST.append(INDEX)
+                UPDATE_FLAG = 1
+
 
 def refactorAnnotations(annotations):
     images = {}
@@ -58,6 +70,28 @@ def refactorAnnotations(annotations):
         images[image_id]['annotations'].append(ann)
     return images
 
+
+def saveCulledAnnotations(annotations, outfile):
+    global BLACKLIST
+    global IMAGE_ID_LIST
+    cull_ids = [IMAGE_ID_LIST[i] for i in BLACKLIST]
+    cull_annotations = {}
+    cull_annotations['images'] = []
+    cull_annotations['annotations'] = []
+    cull_annotations['categories'] = annotations['categories']
+    print("Culling annotations...")
+    for i, image in enumerate(annotations['images']):
+        if image['id'] not in cull_ids:
+            cull_annotations['images'].append(annotations['images'][i])
+    for i, ann in enumerate(annotations['annotations']):
+        if ann['image_id'] not in cull_ids:
+            cull_annotations['annotations'].append(annotations['annotations'][i])
+    print("Saving annotations to {}".format(outfile))
+    with open(outfile, 'wb') as outfile:
+            outfile.write(json.dumps(cull_annotations))
+    print("Finished saving annotations")
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description='Tool for annotating monocular image sequences with groundtruth poses.')
     parser.add_argument('--camera', type=str, required=True,
@@ -68,7 +102,7 @@ def parse_args():
         help='JSON file containing pose annotations for image sequence. Expected format is COCO style as exported from VisPose.')
     parser.add_argument('--models', type=str, required=True,
         help='Text file containing model names and paths.')
-    parser.add_argument('--rate', type=int, default=5,
+    parser.add_argument('--rate', type=int, default=10,
         help='Framerate for playback.')
     return parser.parse_args()
 
@@ -78,14 +112,23 @@ if __name__ == "__main__":
     global INDEX; INDEX = 0
     global MAX_INDEX; MAX_INDEX = 0
     global UPDATE_FLAG; UPDATE_FLAG = 1
+    global SAVE_FLAG; SAVE_FLAG = 0
     global PLAY; PLAY = False
     global BBOX; BBOX = False
-    IMAGE_ID_LIST = []
+    global BLACKLIST; BLACKLIST = []
+    global IMAGE_ID_LIST; IMAGE_ID_LIST = []
     CATEGORIES = {}
 
-    camera = v.Camera(args.camera)
-    viewer = v.Viewer(camera, background=osp.join(args.images, '0.png'))
     annotations = parseAnnotations(args.ann)
+    MAX_INDEX = len(annotations['images']) - 1
+    IMAGE_ID_LIST = [image['id'] for image in annotations['images']]
+    CATEGORIES = {}
+    for c in annotations['categories']:
+        CATEGORIES[c['id']] = c['name']
+    images = refactorAnnotations(annotations)
+
+    camera = v.Camera(args.camera)
+    viewer = v.Viewer(camera, background=osp.join(args.images, images[IMAGE_ID_LIST[0]]['file_name']))
     models = parseModels(args.models)
 
     for model in models:
@@ -93,13 +136,6 @@ if __name__ == "__main__":
         viewer.add(*[mesh for mesh in v.load_textured(model['path'], model['name'])])
 
     glfw.set_key_callback(viewer.win, keyCallback)
-
-    MAX_INDEX = len(annotations['images']) - 1
-    IMAGE_ID_LIST = [image['id'] for image in annotations['images']]
-    CATEGORIES = {}
-    for c in annotations['categories']:
-        CATEGORIES[c['id']] = c['name']
-    images = refactorAnnotations(annotations)
 
     # for i, ann in enumerate(annotations['annotations']):
     #     print("{} of {}".format(i,len(annotations['annotations'])))
@@ -119,6 +155,7 @@ if __name__ == "__main__":
             image = images[IMAGE_ID_LIST[INDEX]]
             viewer.background.set(osp.join(args.images, image['file_name']))
             viewer.clear_bboxes()
+            viewer.clear_markers()
             for ann in image['annotations']:
                 name = CATEGORIES[ann['category_id']]
                 viewer.set_active(name)
@@ -129,7 +166,11 @@ if __name__ == "__main__":
                 if BBOX and ann['pose'][2] > 0:
                     viewer.add_bbox(ann['bbox'])
                     # viewer.add_bbox(viewer.bounding_box())
+                if INDEX in BLACKLIST:
+                    viewer.add_marker(center=[0.9,0.9], width=0.1, color=[1,0.5,0])
             viewer.render()
+            sys.stdout.write('image: {}/{}     \r'.format(INDEX, MAX_INDEX))
+            sys.stdout.flush()
             UPDATE_FLAG = 0
 
         glfw.poll_events()
@@ -142,3 +183,8 @@ if __name__ == "__main__":
             UPDATE_FLAG = 1
             while 1/float(args.rate) > time()-now:
                 pass
+
+        if SAVE_FLAG:
+            SAVE_FLAG = 0
+            outfile = osp.splitext(args.ann)[0] + '_culled' + osp.splitext(args.ann)[1]
+            saveCulledAnnotations(annotations, outfile)
