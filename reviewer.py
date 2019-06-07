@@ -43,13 +43,17 @@ def keyCallback(win, key, scancode, action, mods):
             SAVE_FLAG = 1
         elif ~PLAY:
             if key == glfw.KEY_LEFT:
-                if INDEX != 0:
+                if INDEX == 0:
+                    INDEX = MAX_INDEX
+                else:
                     INDEX -= 1
-                    UPDATE_FLAG = 1
+                UPDATE_FLAG = 1
             elif key == glfw.KEY_RIGHT:
-                if INDEX != MAX_INDEX:
+                if INDEX == MAX_INDEX:
+                    INDEX = 0
+                else:
                     INDEX += 1
-                    UPDATE_FLAG = 1
+                UPDATE_FLAG = 1
             elif key == glfw.KEY_M:
                 if INDEX in BLACKLIST:
                     BLACKLIST.remove(INDEX)
@@ -169,7 +173,7 @@ if __name__ == "__main__":
                 if INDEX in BLACKLIST:
                     viewer.add_marker(center=[0.9,0.9], width=0.1, color=[1,0.5,0])
             viewer.render()
-            sys.stdout.write('image: {}/{}     \r'.format(INDEX, MAX_INDEX))
+            sys.stdout.write('image: {}/{}  -  b -> toggle boxes, m -> mark frame, s -> cull and save, <space> -> toggle play, <left, right> -> move single frame     \r'.format(INDEX, MAX_INDEX))
             sys.stdout.flush()
             UPDATE_FLAG = 0
 
