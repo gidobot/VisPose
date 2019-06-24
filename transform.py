@@ -63,14 +63,14 @@ def ortho(left, right, bot, top, near, far):
                      [0,    0,    0,     1]], 'f')
 
 
-def perspective(fovy, aspect, near, far):
+def perspective(fovy, aspect, near, far, cx=0, cy=0):
     """ perspective projection matrix, from field of view and aspect ratio """
     _scale = 1.0/math.tan(math.radians(fovy)/2.0)
     sx, sy = _scale / aspect, _scale
     zz = (far + near) / (near - far)
     zw = 2 * far * near/(near - far)
-    return np.array([[sx, 0,  0,  0],
-                     [0,  sy, 0,  0],
+    return np.array([[sx, 0,  cx,  0],
+                     [0,  sy, cy,  0],
                      [0,  0, zz, zw],
                      [0,  0, -1,  0]], 'f')
 

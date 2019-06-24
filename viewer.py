@@ -615,9 +615,13 @@ class Camera:
     # convenient pre-calcs for for OpenGL
     fx = self.K[0,0]
     fy = self.K[1,1]
+    cx = self.K[0,2]
+    cy = self.K[1,2]
     self.fovy = 2*np.arctan(0.5*self.height/fy)*180/np.pi
     self.aspect = (self.width*fy)/(self.height*fx)
     self.horizontalfov = self.fovy * np.pi / 180
+    self.Cx = 2*(cx/self.width)-1
+    self.Cy = 2*(cy/self.height) - 1
 
   def __str__(self):
       return self.name
@@ -715,7 +719,9 @@ class Viewer:
         zfar = self.camera.clipplanefar
         aspect = self.camera.aspect
         fovy = self.camera.fovy
-        self.projection_matrix = perspective(fovy, aspect, znear, zfar)
+        cx = self.camera.Cx
+        cy = self.camera.Cy
+        self.projection_matrix = perspective(fovy, aspect, znear, zfar, cx, cy)
 
     def set_view_from_pose_matrix(self, Rt):
       self.trackball.view_from_pose_matrix(Rt)

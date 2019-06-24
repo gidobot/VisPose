@@ -33,15 +33,19 @@ def keyCallback(win, key, scancode, action, mods):
     global PLAY
     global BBOX
     global BLACKLIST
+    global MODELSHOW
     if action == glfw.PRESS or action == glfw.REPEAT:
         if key == glfw.KEY_SPACE:
-            PLAY = ~PLAY
+            PLAY = not PLAY
         elif key == glfw.KEY_B:
-            BBOX = ~BBOX
+            BBOX = not BBOX
             UPDATE_FLAG = 1
         elif key == glfw.KEY_S:
             SAVE_FLAG = 1
-        elif ~PLAY:
+        elif key == glfw.KEY_O:
+            MODELSHOW =  not MODELSHOW
+            UPDATE_FLAG = 1
+        elif not PLAY:
             if key == glfw.KEY_LEFT:
                 if INDEX == 0:
                     INDEX = MAX_INDEX
@@ -119,6 +123,7 @@ if __name__ == "__main__":
     global SAVE_FLAG; SAVE_FLAG = 0
     global PLAY; PLAY = False
     global BBOX; BBOX = False
+    global MODELSHOW; MODELSHOW = True
     global BLACKLIST; BLACKLIST = []
     global IMAGE_ID_LIST; IMAGE_ID_LIST = []
     CATEGORIES = {}
@@ -170,10 +175,13 @@ if __name__ == "__main__":
                 if BBOX and ann['pose'][2] > 0:
                     viewer.add_bbox(ann['bbox'])
                     # viewer.add_bbox(viewer.bounding_box())
+                if not MODELSHOW:
+                    Rt[2,3] = -10
+                    viewer.set_pose_matrix(Rt)
                 if INDEX in BLACKLIST:
                     viewer.add_marker(center=[0.9,0.9], width=0.1, color=[1,0.5,0])
             viewer.render()
-            sys.stdout.write('image: {}/{}  -  b -> toggle boxes, m -> mark frame, s -> cull and save, <space> -> toggle play, <left, right> -> move single frame     \r'.format(INDEX, MAX_INDEX))
+            sys.stdout.write('image: {}/{}  -  b -> toggle boxes, o -> toggle models, m -> mark frame, s -> cull and save, <space> -> toggle play, <left, right> -> move single frame     \r'.format(INDEX, MAX_INDEX))
             sys.stdout.flush()
             UPDATE_FLAG = 0
 
