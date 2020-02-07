@@ -7,6 +7,7 @@ import json
 import sys
 from os import path as osp
 from time import time
+from tqdm import tqdm
 
 
 def parseAnnotations(file):
@@ -112,6 +113,9 @@ def parse_args():
         help='Text file containing model names and paths.')
     parser.add_argument('--rate', type=int, default=10,
         help='Framerate for playback.')
+    parser.add_argument('--fisheye', dest='is_fisheye', action='store_true',
+        help='Annotate raw fisheye images.')
+    parser.set_defaults(is_fisheye=False)
     return parser.parse_args()
 
 if __name__ == "__main__":
@@ -136,13 +140,28 @@ if __name__ == "__main__":
         CATEGORIES[c['id']] = c['name']
     images = refactorAnnotations(annotations)
 
-    camera = v.Camera(args.camera)
+    camera = v.Camera(args.camera, is_fisheye=args.is_fisheye)
     viewer = v.Viewer(camera, background=osp.join(args.images, images[IMAGE_ID_LIST[0]]['file_name']))
     models = parseModels(args.models)
 
     for model in models:
         print(model['name'])
         viewer.add(*[mesh for mesh in v.load_textured(model['path'], model['name'])])
+
+    # update bboxes for fisheye
+    if args.is_fisheye:
+        pbar = tqdm(desc="Processing fisheye bboxes", total=len(images))
+        for k, image in images.items():
+            for ann in image['annotations']:
+                name = CATEGORIES[ann['category_id']]
+                viewer.set_active(name)
+                Rt = np.eye(4)
+                Rt[0:3,3] = ann['pose'][0:3]
+                Rt[0:3,0:3] = tf3d.quaternions.quat2mat(ann['pose'][3:])
+                viewer.set_pose_matrix(Rt)
+                ann['bbox'] = [float(x) for x in viewer.bounding_box_fisheye()]
+                ann['area'] = ann['bbox'][2]*ann['bbox'][3]
+            pbar.update(1)
 
     glfw.set_key_callback(viewer.win, keyCallback)
 
@@ -198,5 +217,8 @@ if __name__ == "__main__":
 
         if SAVE_FLAG:
             SAVE_FLAG = 0
-            outfile = osp.splitext(args.ann)[0] + '_culled' + osp.splitext(args.ann)[1]
+            if args.is_fisheye:
+                outfile = osp.splitext(args.ann)[0] + '_fisheye_culled' + osp.splitext(args.ann)[1]
+            else:
+                outfile = osp.splitext(args.ann)[0] + '_culled' + osp.splitext(args.ann)[1]
             saveCulledAnnotations(annotations, outfile)
