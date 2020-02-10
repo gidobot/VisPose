@@ -1,0 +1,2 @@
+soihandle /media/storage/NASA_PSTAR/CAD/SOI_Handle/SOI_Handle_OBJ/SOI_Handle.obj
+whoihandle /media/storage/NASA_PSTAR/CAD/WHOI_THandle/WHOI_THandle_OBJ/WHOI_THandle.obj

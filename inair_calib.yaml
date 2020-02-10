@@ -1,0 +1,8 @@
+cam0:
+  cam_overlaps: []
+  camera_model: pinhole
+  distortion_coeffs: [0, 0, 0, 0]
+  distortion_model: radtan
+  intrinsics: [1793.0, 1793.0, 1224, 1024]
+  resolution: [2448, 2048]
+  rostopic: /camera/inair/image_color
