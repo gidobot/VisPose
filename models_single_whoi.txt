@@ -1,1 +1,1 @@
-whoihandle /media/storage/NASA_PSTAR/CAD/WHOI_THandle/WHOI_THandle_OBJ/WHOI_THandle.obj
+whoihandle /home/gidobot/droplab-tools/VisPose/models/WHOI_THandle/WHOI_THandle_OBJ/WHOI_THandle.obj

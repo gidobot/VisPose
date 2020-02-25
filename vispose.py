@@ -25,7 +25,8 @@ class MainWindowUIClass( Ui_MainWindow ):
 
         """ create a window, add scene objects, then run rendering loop """
         camera = v.Camera(camera_cal)
-        self.viewer = v.Viewer(camera, background=osp.join(image_folder, '0.png'))
+        image_0 = osp.join(image_folder, str(self.pose_annotations[0][0])+self.image_format)
+        self.viewer = v.Viewer(camera, background=image_0)
 
         # place instances of our basic objects
         # viewer.add(*[mesh for file in sys.argv[1:] for mesh in load(file)])
@@ -400,7 +401,7 @@ def parse_args():
     parser.add_argument('--images', type=str, required=True,
         help='Folder containing image sequence. Expected naming convention is consecutive number sequence starting from 0.png.')
     parser.add_argument('--poses', type=str, required=True,
-        help='CSV file containing pose annotations for image sequence. Expected format for each line in file is "image_number, x, y, z, qw, qx, qy, qz".')
+        help='CSV file containing pose annotations for image sequence. Expected format for each line in file is "image #, x, y, z, qw, qx, qy, qz".')
     return parser.parse_args()
 
 if __name__ == "__main__":

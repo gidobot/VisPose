@@ -1,3 +1,3 @@
-umichhandle /media/storage/NASA_PSTAR/CAD/UMich_THandle/UMich_THandle_OBJ/UMich_THandle.obj
-whoihandle /media/storage/NASA_PSTAR/CAD/WHOI_THandle/WHOI_THandle_OBJ/WHOI_THandle.obj
-soihandle /media/storage/NASA_PSTAR/CAD/SOI_Handle/SOI_Handle_OBJ/SOI_Handle.obj
+umichhandle /home/gidobot/workspace/droplab-tools/VisPose/models/UMich_THandle/UMich_THandle_OBJ/UMich_THandle.obj
+whoihandle /home/gidobot/workspace/droplab-tools/VisPose/models/WHOI_THandle/WHOI_THandle_OBJ/WHOI_THandle.obj
+soihandle /home/gidobot/workspace/droplab-tools/VisPose/models/SOI_Handle/SOI_Handle_OBJ/SOI_Handle.obj
