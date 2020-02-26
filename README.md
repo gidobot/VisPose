@@ -9,5 +9,4 @@ Optional:
 pip install pycuda
 
 ## Examples
-
-<video src="VisPose_FittingModel.mp4" width="320" height="200" controls preload></video>
+![Output sample](https://github.com/gidobot/VisPose/blob/master/VisPose_FittingModel.gif)
