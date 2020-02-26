@@ -114,7 +114,7 @@ def parse_args():
     parser.add_argument('--rate', type=int, default=10,
         help='Framerate for playback.')
     parser.add_argument('--fisheye', dest='is_fisheye', action='store_true',
-        help='Annotate raw fisheye images.')
+        help='Regenerate bounding box annotations for raw fisheye images.')
     parser.set_defaults(is_fisheye=False)
     return parser.parse_args()
 

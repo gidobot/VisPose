@@ -19,7 +19,7 @@ from PIL import Image # load images for textures
 import yaml
 
 from transform import *
-from cuda_utils import project_points_fisheye
+from fisheye_utils import project_points_fisheye
 
 # import logging
 # logger = logging.getLogger("pyassimp")
