@@ -13,6 +13,6 @@ Fitting model into image sequence with fine-grained mouse control, using the vis
 
 ![Output sample](https://github.com/gidobot/gifs/raw/master/VisPose_FittingModel.gif)
 
-Reviewer annotations with reviewer.py
+Reviewing annotations with reviewer.py
 
 ![Output sample](https://github.com/gidobot/gifs/raw/master/VisPose_Reviewer.gif)
