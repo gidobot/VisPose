@@ -10,4 +10,5 @@ pip install pycuda
 
 ## Examples
 Fitting model into image sequence
+
 ![Output sample](https://github.com/gidobot/gifs/raw/master/VisPose_FittingModel.gif)
