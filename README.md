@@ -9,6 +9,6 @@ Optional:
 pip install pycuda
 
 ## Examples
-Fitting model into image sequence
+Fitting model into image sequence with fine-grained mouse control
 
 ![Output sample](https://github.com/gidobot/gifs/raw/master/VisPose_FittingModel.gif)
