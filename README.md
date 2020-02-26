@@ -4,3 +4,6 @@ VisPose is a tool for annotating 6D object poses and 2D bounding boxes in monocu
 ## Dependencies
 ### Python
 pip install pyopengl glfw pyassimp==4.1.3 transforms3d numpy Pillow pyyaml
+
+Optional:
+pip install pycuda
