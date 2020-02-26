@@ -9,4 +9,4 @@ Optional:
 pip install pycuda
 
 ## Examples
-![Output sample](https://github.com/gidobot/VisPose/blob/master/VisPose_FittingModel.gif)
+![Output sample](https://github.com/gidobot/VisPose/raw/master/VisPose_FittingModel.gif)
