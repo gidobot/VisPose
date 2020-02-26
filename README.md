@@ -7,3 +7,7 @@ pip install pyopengl glfw pyassimp==4.1.3 transforms3d numpy Pillow pyyaml
 
 Optional:
 pip install pycuda
+
+## Examples
+
+<video src="VisPose_FittingModel.mp4" width="320" height="200" controls preload></video>
