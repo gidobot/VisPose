@@ -9,5 +9,5 @@ Optional:
 pip install pycuda
 
 ## Examples
+Using VisPose to fit a model into an image sequence
 ![Output sample](https://github.com/gidobot/gifs/raw/master/VisPose_FittingModel.gif)
-<!--![Output sample](https://github.com/gidobot/VisPose/raw/master/VisPose_FittingModel.gif)-->
