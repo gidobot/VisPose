@@ -12,3 +12,7 @@ pip install pycuda
 Fitting model into image sequence with fine-grained mouse control, using the vispose.py annotation tool
 
 ![Output sample](https://github.com/gidobot/gifs/raw/master/VisPose_FittingModel.gif)
+
+Reviewer annotations with reviewer.py
+
+![Output sample](https://github.com/gidobot/gifs/raw/master/VisPose_Reviewer.gif)
