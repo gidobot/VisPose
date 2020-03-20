@@ -45,7 +45,7 @@ The model description file is a text file containing the object names and paths 
 object_name /path/to/object/<model_name>.obj
 ```
 
-See the models.txt file in the models folder as an example. object_name must match the names of the objects set in vispose.py when the annotations were exported.
+See the models.txt file in the models folder as an example. object_name must match the names of the objects set in the vispose.py tool when the annotations were exported.
 
 The annotations can be played back and outliers can be marked for culling. Once all images desired to be culled are marked, the annotations can be re-exported.
 
