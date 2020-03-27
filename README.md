@@ -1,5 +1,5 @@
 # VisPose
-VisPose is a tool for annotating 6D object poses and 2D bounding boxes in monocular image sequences. The tool provides an interface for projecting models into an image sequence and tweaking their fit before batch exporting COCO style annotations for the entire sequence.
+VisPose is a tool for annotating 6D object poses and 2D bounding boxes in monocular image sequences. The tool provides an interface for projecting models into an image sequence and tweaking their fit before batch exporting COCO style annotations for the entire sequence. The tool supports fisheye sequences, but can only render visualizations of the bounding box annotations in the raw fisheye images.
 
 ## Dependencies
 ### Python
