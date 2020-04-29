@@ -8,5 +8,5 @@ cam0:
   rostopic: /camera/image_raw
 fisheye:
   distortion_coeffs: [0., 0., 0., 0.]
-  intrinsics: [758.163, 758.163, 1224, 1024]
+  intrinsics: [774.6627461537468, 774.1214804539792, 1224, 1024]
   resolution: [2448, 2048]

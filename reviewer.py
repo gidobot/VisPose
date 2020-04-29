@@ -5,6 +5,7 @@ import argparse
 import transforms3d as tf3d
 import json
 import sys
+import random
 from os import path as osp
 from time import time
 from tqdm import tqdm
@@ -115,7 +116,10 @@ def parse_args():
         help='Framerate for playback.')
     parser.add_argument('--fisheye', dest='is_fisheye', action='store_true',
         help='Regenerate bounding box annotations for raw fisheye images.')
+    parser.add_argument('--random', dest='randomize', action='store_true',
+        help='Randomize frames during playback.')
     parser.set_defaults(is_fisheye=False)
+    parser.set_defaults(randomize=False)
     return parser.parse_args()
 
 if __name__ == "__main__":
@@ -135,6 +139,8 @@ if __name__ == "__main__":
     annotations = parseAnnotations(args.ann)
     MAX_INDEX = len(annotations['images']) - 1
     IMAGE_ID_LIST = [image['id'] for image in annotations['images']]
+    if args.randomize:
+        random.shuffle(IMAGE_ID_LIST)
     CATEGORIES = {}
     for c in annotations['categories']:
         CATEGORIES[c['id']] = c['name']
@@ -190,6 +196,8 @@ if __name__ == "__main__":
                 Rt = np.eye(4)
                 Rt[0:3,3] = ann['pose'][0:3]
                 Rt[0:3,0:3] = tf3d.quaternions.quat2mat(ann['pose'][3:])
+                print(name)
+                print(np.array2string(Rt, separator=','))
                 viewer.set_pose_matrix(Rt)
                 if BBOX and ann['pose'][2] > 0:
                     viewer.add_bbox(ann['bbox'])
