@@ -61,3 +61,17 @@ Fitting model into image sequence with fine-grained mouse control, using the vis
 Reviewing annotations with reviewer.py
 
 ![Output sample](https://github.com/gidobot/gifs/raw/master/VisPose_Reviewer.gif)
+
+## Citation
+If you use this tool in your research, we request you to cite the following work.
+```
+@ARTICLE{9091344,
+ author={G. {Billings} and M. {Johnson-Roberson}},
+ journal={IEEE Robotics and Automation Letters},
+ title={SilhoNet-Fisheye: Adaptation of A ROI-Based Object Pose Estimation Network to Monocular Fisheye Images},
+ year={2020},
+ volume={},
+ number={},
+ pages={1-1},
+}
+```
